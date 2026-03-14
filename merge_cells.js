@@ -10,6 +10,10 @@
         return /^[ \t]+/.test(last_line);
     };
 
+    var starts_with_definition_or_decorator = function(text) {
+        return /^(?:def|class)\b|^@/.test(text);
+    };
+
     var merge_code_contents = function(contents) {
         if (contents.length === 0) {
             return '';
@@ -17,7 +21,11 @@
 
         var merged = contents[0];
         for (var i = 1; i < contents.length; i++) {
-            merged += ends_with_indented_line(contents[i - 1]) ? '\n\n' : '\n';
+            if (starts_with_definition_or_decorator(contents[i])) {
+                merged += '\n\n';
+            } else {
+                merged += ends_with_indented_line(contents[i - 1]) ? '\n\n' : '\n';
+            }
             merged += contents[i];
         }
 
