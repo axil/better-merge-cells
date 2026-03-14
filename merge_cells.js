@@ -1,3 +1,29 @@
+    var trim_blank_lines = function(text) {
+        return text
+            .replace(/^(?:[ \t]*\n)+/, '')
+            .replace(/(?:\n[ \t]*)+$/, '');
+    };
+
+    var ends_with_indented_line = function(text) {
+        var lines = text.split('\n');
+        var last_line = lines[lines.length - 1];
+        return /^[ \t]+/.test(last_line);
+    };
+
+    var merge_code_contents = function(contents) {
+        if (contents.length === 0) {
+            return '';
+        }
+
+        var merged = contents[0];
+        for (var i = 1; i < contents.length; i++) {
+            merged += ends_with_indented_line(contents[i - 1]) ? '\n\n' : '\n';
+            merged += contents[i];
+        }
+
+        return merged;
+    };
+
     Notebook.prototype.merge_cells = function(indices, into_last) {
         if (indices.length <= 1) {
             return;
@@ -19,17 +45,17 @@
         // Get all the cells' contents
         var contents = [];
         for (i=0; i < indices.length; i++) {
-            contents.push(this.get_cell(indices[i]).get_text());
+            contents.push(trim_blank_lines(this.get_cell(indices[i]).get_text()));
         }
         if (into_last) {
-            contents.push(target.get_text());
+            contents.push(trim_blank_lines(target.get_text()));
         } else {
-            contents.unshift(target.get_text());
+            contents.unshift(trim_blank_lines(target.get_text()));
         }
 
         // Update the contents of the target cell
         if (target instanceof codecell.CodeCell) {
-            target.set_text(contents.join('\n\n'));
+            target.set_text(merge_code_contents(contents));
         } else {
             var was_rendered = target.rendered;
             target.unrender(); // Must unrender before we set_text.
